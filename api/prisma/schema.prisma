@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum typeUser {
+  ADMIN
+  RENTER
+  HOST
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  firstName    String
+  username     String?
+  lastName     String
+  email        String   @unique
+  address      String?
+  password     String
+  role         typeUser
+  refreshToken String?
+  banned       Boolean  @default(false)
+  contact      String?
+  imageURL     String?
+  motels       Motel[]
+  renters      User[]   @relation("HostRenter")
+
+  hostId Int?
+  host   User? @relation("HostRenter", fields: [hostId], references: [id])
+
+  Rent Rent[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Rent {
+  id               Int     @id @default(autoincrement())
+  idRenter         Int
+  idMotel          Int
+  quantity         Int
+  phoneNumber      String
+  duration         Int
+  currentMonth     Int     @default(0)
+  idCard           String
+  completed        Boolean @default(false)
+  cancelSideRenter Boolean @default(false)
+  cancelSideHost   Boolean @default(false)
+  Motel            Motel   @relation(fields: [idMotel], references: [id])
+  Renter           User    @relation(fields: [idRenter], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("rent")
+}
+
+model Motel {
+  id        Int     @id @default(autoincrement())
+  name      String
+  nation    String
+  local     String
+  booked    Int
+  quantity  Int
+  reviews   Int
+  desc      String
+  title     String
+  rate      Rate?
+  images    Image[]
+  amenities String
+  price     Int
+  discount  Int
+  range     Int
+  deleted   Boolean @default(false)
+
+  idUser Int
+  host   User @relation(fields: [idUser], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  Rent Rent[]
+
+  @@map("motels")
+}
+
+model Rate {
+  id       Int   @id @default(autoincrement())
+  quantity Int
+  motelId  Int   @unique
+  motel    Motel @relation(fields: [motelId], references: [id])
+
+  @@map("rates")
+}
+
+model Image {
+  id       Int    @id @default(autoincrement())
+  fileName String
+  idMotel  Int
+
+  Motel Motel @relation(fields: [idMotel], references: [id])
+
+  @@map("images")
+}
